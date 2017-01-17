@@ -27,11 +27,11 @@ def parse_background(frame, declarations, path):
         elif declaration.name=="background-repeat":
             if declaration.value[0].type=="IDENT":
                 if declaration.value[0].value=="repeat-x":
-                    repeaty=False
                     repeatx=True
+                    #repeaty=False if not repeaty else True
                 elif declaration.value[0].value=="repeat-y":
                     repeaty=True
-                    repeatx=False
+                    #repeatx=False if not repeatx else True
                 else:
                     fail()
             else:

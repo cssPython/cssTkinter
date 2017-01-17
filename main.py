@@ -9,6 +9,75 @@ cssTkinter=None
 def fail():
     raise RuntimeError()
 
+def body():
+    pass
+
+
+def test_run():
+    from bs4 import BeautifulSoup
+    html="""
+    <html>
+    <script>
+    body {
+        width: 75%;
+        height: 50%;
+        background-color: #FFFFFF;
+        background-image: url('gradient_bg.png');
+        background-repeat: repeat-x;
+    }
+    div {
+        width: 100%;
+        height: 10%;
+    }
+    </script>
+    <body>
+    Hello world!
+    <div>First</div>
+    <div>Second</div>
+    <div>Third</div>
+    </body>
+    </html>
+    """
+    pyfile="""
+
+    """
+    b=BeautifulSoup(html, "html.parser")
+
+    root=tkinter.Tk()
+    root.geometry("1280x720+0+0")
+    root.update()
+    canvas=tkinter.Canvas(root, highlightthickness=0, borderwidth=0)
+    canvas.place(x=0,y=0,width=1280,height=720)
+    canvas.update()
+
+    def assign(element):
+        element.id=canvas.create_rectangle(0,0,0,0,width=0)
+        element.child_ids=[]
+        if not hasattr(element, "children"):
+            return
+        for child in element.children:
+            assign(child)
+
+    assign(b)
+    import cssTkinter.processor
+
+    def filecontentprovider():
+        pass
+
+    def get(path):
+        import os
+        return open(os.path.join("tests",path), 'rb')
+
+    filecontentprovider.get=get
+
+    def resize(e=None):
+        coords=canvas.coords(b.body.id)
+        x0,y0,x1,y1=int(coords[0]),int(coords[1]),int(coords[2]),int(coords[3])
+
+        root.geometry("{}x{}".format(x1-x0, y1-y0))
+
+    root.after(1, cssTkinter.processor.process(b.script.text, b, canvas, fileprovider=filecontentprovider, callback=resize))
+    root.mainloop()
 
 
 def parse_rule(rule, path, frame):
@@ -46,12 +115,12 @@ def run_tests(delay=5000):
     parser = tinycss.make_parser('page3')
     root=tkinter.Tk()
     root.geometry("1280x720+0+0")
-    frame=tkinter.Frame(root)
-    root.after(1, lambda: parse_file(parser, "tests\\4_sizes_relative.css","tests", frame))
+    frame=tkinter.Canvas(root, highlightthickness=0)
+    root.after(1, lambda: parse_file(parser, os.path.join("tests","4_sizes_relative.css"),"tests", frame))
     root.mainloop()
 
 def main():
-    run_tests()
+    test_run()
 
 def pip_install(package, user=True):
     try:
