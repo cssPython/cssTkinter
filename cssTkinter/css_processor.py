@@ -7,6 +7,12 @@ parser = tinycss.make_parser('page3')
 def fail():
     raise RuntimeError()
 
+def parse_css(csstext):
+    stylesheet = parser.parse_stylesheet(csstext)
+    if len(stylesheet.errors) > 0:
+        fail()
+    return stylesheet
+
 def process(css, html, canvas, fileprovider=None, callback=None):
 
     def parse_text(rule, htmlobject, id):
@@ -15,6 +21,7 @@ def process(css, html, canvas, fileprovider=None, callback=None):
             x0,y0,x1,y1=int(coords[0]),int(coords[1]),int(coords[2]),int(coords[3])
             text=canvas.create_text(x0, y0, anchor=tkinter.W,text=htmlobject.text)
             htmlobject.child_ids.append(text)
+            print("Set text: " + htmlobject.text)
 
     def parse_size(rule, htmlobject, id):
         width=0
@@ -45,7 +52,7 @@ def process(css, html, canvas, fileprovider=None, callback=None):
                     fail()
 
         print("parent:")
-        print("Setting size: {} {}".format(width, height))
+        print("Setting size: {} {} for ".format(width, height, id))
 
 
         if relx:
@@ -154,21 +161,29 @@ def process(css, html, canvas, fileprovider=None, callback=None):
                     htmlobject.child_ids.append((background_image_label,background_image))
             print("Set images: {} {} {} {}".format(x0,y0,width,height))
 
+    PARSERS=[parse_size, parse_background, parse_text]
 
-    def process_rule(rule):
+    def onElementRuleChange(rule, element):
+        parser(rule, element, element.id)
+
+    def onRuleChange(rule):
         selector = rule.selector[0].value
         htmlobjects = html.select(selector)
         for htmlobject in htmlobjects:
-            parse_size(rule, htmlobject, htmlobject.id)
-            parse_background(rule, htmlobject, htmlobject.id)
+            for parser in PARSERS:
+                parser(rule, htmlobject, htmlobject.id)
 
+    def init_process_rule(rule):
+        selector = rule.selector[0].value
+        htmlobjects = html.select(selector)
+        for htmlobject in htmlobjects:
+            htmlobject.onElementRuleChange=onElementRuleChange
+        onRuleChange(rule)
 
     canvas.update()
-    stylesheet = parser.parse_stylesheet(css)
-    if len(stylesheet.errors) > 0:
-        fail()
+    stylesheet = css
     for rule in stylesheet.rules:
-        process_rule(rule)
+        init_process_rule(rule)
     if callback:
         callback()
 

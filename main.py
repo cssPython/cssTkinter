@@ -12,11 +12,7 @@ def fail():
 def body():
     pass
 
-
-def test_run():
-    from bs4 import BeautifulSoup
-    html="""
-    <html>
+html="""<html>
     <script>
     body {
         width: 75%;
@@ -36,30 +32,59 @@ def test_run():
     <div>Second</div>
     <div>Third</div>
     </body>
-    </html>
-    """
-    pyfile="""
+    </html>"""
+pyfile="""
 
     """
-    b=BeautifulSoup(html, "html.parser")
 
+PRINT_IDS = True
+
+
+
+def create_window():
     root=tkinter.Tk()
     root.geometry("1280x720+0+0")
     root.update()
+    return root
+
+def create_canvas(root):
     canvas=tkinter.Canvas(root, highlightthickness=0, borderwidth=0)
     canvas.place(x=0,y=0,width=1280,height=720)
     canvas.update()
+    return canvas
 
-    def assign(element):
-        element.id=canvas.create_rectangle(0,0,0,0,width=0)
-        element.child_ids=[]
+def test_run():
+    import cssTkinter.css_processor, cssTkinter.html_processor
+    b=cssTkinter.html_processor.parse_html(html)
+    css=cssTkinter.css_processor.parse_css(b.script.text)
+    root=create_window()
+    canvas=create_canvas(root)
+
+    def assignables(element, assigna):
         if not hasattr(element, "children"):
             return
         for child in element.children:
-            assign(child)
+            print(child.name)
+            assigna.append(child)
+            assignables(child, assigna)
 
-    assign(b)
-    import cssTkinter.processor
+    assigna=[]
+    assigna.append(b.select("html")[0])
+    assignables(b.select("html")[0], assigna)
+    for element in assigna:
+        element.id=canvas.create_rectangle(0,0,0,0,width=0, fill="pink")
+        element.child_ids=[]
+
+    if PRINT_IDS:
+        def print_ids(element):
+            print("{} {}".format(element.name, element.id))
+            if hasattr(element, "children"):
+                for child in element.children:
+                    print_ids(child)
+        print_ids(b.select("html")[0])
+
+
+
 
     def filecontentprovider():
         pass
@@ -76,7 +101,7 @@ def test_run():
 
         root.geometry("{}x{}".format(x1-x0, y1-y0))
 
-    root.after(1, cssTkinter.processor.process(b.script.text, b, canvas, fileprovider=filecontentprovider, callback=resize))
+    root.after(1, cssTkinter.css_processor.process(css, b, canvas, fileprovider=filecontentprovider, callback=resize))
     root.mainloop()
 
 
@@ -86,7 +111,7 @@ def parse_rule(rule, path, frame):
         fail()
     print(rule.selector[0].type)
     if rule.selector[0].type != "IDENT":
-       fail()
+        fail()
 
     print(elementname)
     if elementname == "body":
@@ -136,14 +161,15 @@ def pip_install(package, user=True):
 def init():
     print("Starting... ")
 
+    restart=False
+
     try:
         global tinycss
         import tinycss
     except:
         print("tinycss not installed. Trying to use pip")
         pip_install("tinycss")
-        print("restart this program.")
-        exit(0)
+        restart=True
 
     try:
         global PIL
@@ -151,7 +177,18 @@ def init():
     except:
         print("PIL not installed. Trying to use pip")
         pip_install("pillow")
-        print("restart!")
+        restart=True
+
+    try:
+        global bs4
+        import bs4
+    except:
+        print("BeautifulSoup not installed")
+        pip_install("bs4")
+        restart=True
+
+    if restart:
+        print("Restart the program!")
         exit(0)
 
     try:
