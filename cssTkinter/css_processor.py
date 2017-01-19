@@ -7,6 +7,12 @@ parser = tinycss.make_parser('page3')
 def fail():
     raise RuntimeError()
 
+def parse_style(styletext):
+    declarations, errors=parser.parse_style_attr(styletext)
+    if len(errors) > 0:
+        fail()
+    return declarations
+
 def parse_css(csstext):
     stylesheet = parser.parse_stylesheet(csstext)
     if len(stylesheet.errors) > 0:

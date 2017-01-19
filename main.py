@@ -28,7 +28,7 @@ html="""<html>
     </script>
     <body>
     Hello world!
-    <div>First</div>
+    <div style="background-color: #0F0F0F;">First</div>
     <div>Second</div>
     <div>Third</div>
     </body>
